@@ -2,6 +2,8 @@
 #include <math.h>
 #include <stdio.h>
 
+int calc_pixel_value(float gx, float gy);
+
 // Convert image to grayscale
 void grayscale(int height, int width, RGBTRIPLE image[height][width])
 {
@@ -95,6 +97,7 @@ void blur(int height, int width, RGBTRIPLE image[height][width])
 }
 
 // Detect edges
+// Detect edges
 void edges(int height, int width, RGBTRIPLE image[height][width])
 {
     RGBTRIPLE copy[height][width];
@@ -105,18 +108,16 @@ void edges(int height, int width, RGBTRIPLE image[height][width])
             copy[i][j] = image[i][j];
         }
     }
-    
+
     // Detect edges
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
         {
-            float gx_red = 0.0;
-            float gy_red = 0.0;
-            float gx_green = 0.0;
-            float gy_green = 0.0;
-            float gx_blue = 0.0;
-            float gy_blue = 0.0;
+            float gx_red = 0.0, gy_red = 0.0;
+            float gx_green = 0.0, gy_green = 0.0;
+            float gx_blue = 0.0, gy_blue = 0.0;
+
             int Gx[] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
             int Gy[] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
@@ -126,52 +127,42 @@ void edges(int height, int width, RGBTRIPLE image[height][width])
                 {
                     int ni = i + di;
                     int nj = j + dj;
+                    int index = (di + 1) * 3 + (dj + 1);
 
                     // Ensure valid neighboring pixels
                     if (ni >= 0 && ni < height && nj >= 0 && nj < width)
                     {
-                        // Calcluate Gx and Gy of red, green, and blue channel values
-                        gx_red += (copy[ni][nj].rgbtRed * Gx[(di + 1) * 3 + (dj + 1)]);
-                        gy_red += (copy[ni][nj].rgbtRed * Gy[(di + 1) * 3 + (dj + 1)]);
-                        gx_green += (copy[ni][nj].rgbtGreen * Gx[(di + 1) * 3 + (dj + 1)]);
-                        gy_green += (copy[ni][nj].rgbtGreen * Gy[(di + 1) * 3 + (dj + 1)]);
-                        gx_blue += (copy[ni][nj].rgbtBlue * Gx[(di + 1) * 3 + (dj + 1)]);
-                        gy_blue += (copy[ni][nj].rgbtBlue * Gy[(di + 1) * 3 + (dj + 1)]);
+                        // Calculate Gx and Gy for each color channel
+                        gx_red += copy[ni][nj].rgbtRed * Gx[index];
+                        gy_red += copy[ni][nj].rgbtRed * Gy[index];
+                        gx_green += copy[ni][nj].rgbtGreen * Gx[index];
+                        gy_green += copy[ni][nj].rgbtGreen * Gy[index];
+                        gx_blue += copy[ni][nj].rgbtBlue * Gx[index];
+                        gy_blue += copy[ni][nj].rgbtBlue * Gy[index];
                     }
                 }
             }
-            int adj_red = (round(sqrt((gx_red * gx_red) + (gy_red * gy_red))));
-            if (adj_red > 255)
-            {
-                adj_red = 255;
-            }
-            else if (adj_red < 0)
-            {
-                adj_red = 0;
-            }
-            int adj_green = (round(sqrt((gx_green * gx_green) + (gy_green * gy_green))));
-            if (adj_green > 255)
-            {
-                adj_green = 255;
-            }
-            else if (adj_green < 0)
-            {
-                adj_green = 0;
-            }
-            int adj_blue = (round(sqrt((gx_blue * gx_blue) + (gy_blue * gy_blue))));
-            if (adj_blue > 255)
-            {
-                adj_blue = 255;
-            }
-            else if (adj_blue < 0)
-            {
-                adj_blue = 0;
-            }
 
-            image[i][j].rgbtRed = adj_red;
-            image[i][j].rgbtGreen = adj_green;
-            image[i][j].rgbtBlue = adj_blue;
+            // Use the helper function
+            image[i][j].rgbtRed = calc_pixel_value(gx_red, gy_red);
+            image[i][j].rgbtGreen = calc_pixel_value(gx_green, gy_green);
+            image[i][j].rgbtBlue = calc_pixel_value(gx_blue, gy_blue);
         }
     }
-    return;
+}
+
+// Helper function to calculate pixel value
+int calc_pixel_value(float gx, float gy)
+{
+    int pixel_value = 0;
+    pixel_value = round(sqrt(pow(gx, 2) + pow(gy, 2)));
+    if (pixel_value > 255)
+    {
+        pixel_value = 255;
+    }
+    if (pixel_value < 0)
+    {
+        pixel_value = 0;
+    }
+    return pixel_value;
 }
